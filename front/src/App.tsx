@@ -7,7 +7,6 @@ interface Cat {
   url: string;
 }
 
-const CAT_API_URL = 'https://api.thecatapi.com/v1/images/search?limit=20';
 const BACKEND_URL = '/api'; // предполагается проксирование через nginx/docker
 const InfiniteCatList = lazy(() => import('./InfiniteCatList'));
 
@@ -16,82 +15,82 @@ function App() {
   const [favoriteCats, setFavoriteCats] = useState<Cat[]>([]);
   const [loading, setLoading] = useState(false);
   const [removingId, setRemovingId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  // Автоматическая регистрация пользователя и сохранение токена
-  useEffect(() => {
-    if (!localStorage.getItem('token')) {
-      fetch('/api/user', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ login: 'testuser', password: 'testpass' }),
+  // функция для загрузки избранных котиков с сервера
+  const fetchFavoriteCats = () => {
+    setLoading(true);
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setError('Вы не авторизованы. Пожалуйста, войдите в систему.');
+      setLoading(false);
+      setFavoriteCats([]);
+      return;
+    }
+    fetch(`${BACKEND_URL}/likes`, { headers: { Authorization: 'Bearer ' + token } })
+      .then(res => {
+        if (res.status === 401) throw new Error('Сессия истекла. Войдите заново.');
+        return res.json();
       })
-        .then(res => {
-          const token = res.headers.get('x-auth-token');
-          if (token) localStorage.setItem('token', token);
-        });
-    }
-  }, []);
+      .then(async data => {
+        const ids = data.data.map((like: any) => like.cat_id);
+        const cats = await Promise.all(
+          ids.map((id: string) =>
+            fetch(`https://api.thecatapi.com/v1/images/${id}`)
+              .then(r => r.ok ? r.json() : null)
+              .catch(() => null)
+          )
+        );
+        setFavoriteCats(cats.filter((c: any) => c && c.id && c.url));
+      })
+      .catch(err => {
+        setError(err.message || 'Ошибка загрузки избранного');
+        setFavoriteCats([]);
+      })
+      .finally(() => setLoading(false));
+  };
 
-  // Загрузка всех котиков с thecatapi.com
-  useEffect(() => {
-    if (tab === 'all') {
-      setLoading(true);
-      fetch(CAT_API_URL)
-        .then(res => res.json())
-        .then(data => setFavoriteCats(data.map((c: any) => ({ id: c.id, url: c.url }))))
-        .finally(() => setLoading(false));
-    }
-  }, [tab]);
-
-  // Загрузка любимых котиков с backend
+  // любимые котики бек
   useEffect(() => {
     if (tab === 'favorites') {
-      setLoading(true);
-      fetch(`${BACKEND_URL}/likes`, { headers: { Authorization: 'Bearer ' + localStorage.getItem('token') } })
-        .then(res => res.json())
-        .then(async data => {
-          const ids = data.data.map((like: any) => like.cat_id);
-          // Получаем данные котиков из thecatapi по id
-          const cats = await Promise.all(
-            ids.map((id: string) =>
-              fetch(`https://api.thecatapi.com/v1/images/${id}`).then(r => r.json())
-            )
-          );
-          setFavoriteCats(cats);
-        })
-        .finally(() => setLoading(false));
+      fetchFavoriteCats();
     }
   }, [tab]);
 
-  // Добавить в избранное
-  const addFavorite = (cat: Cat) => {
-    fetch(`${BACKEND_URL}/likes`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: 'Bearer ' + localStorage.getItem('token'),
-      },
-      body: JSON.stringify({ cat_id: cat.id }),
-    }).then(() => setFavoriteCats((cats: Cat[]) => [...cats, cat]));
-  };
-
-  // Удалить из избранного с анимацией
-  const removeFavorite = (cat: Cat) => {
-    setRemovingId(cat.id);
-    setTimeout(() => {
-      fetch(`${BACKEND_URL}/likes/${cat.id}`, {
-        method: 'DELETE',
+  // избранное
+  const addFavorite = async (cat: Cat) => {
+    try {
+      await fetch(`${BACKEND_URL}/likes`, {
+        method: 'POST',
         headers: {
-          Authorization: 'Bearer ' + localStorage.getItem('token'),
+          'Content-Type': 'application/json',
         },
-      }).then(() => {
-        setFavoriteCats((cats: Cat[]) => cats.filter((c: Cat) => c.id !== cat.id));
-        setRemovingId(null);
+        body: JSON.stringify({ cat_id: cat.id }),
       });
-    }, 300); // длительность анимации
+      fetchFavoriteCats();
+    } catch (err: any) {
+      setError(err.message || 'Ошибка добавления в избранное');
+    }
   };
 
-  // Рендер карточки котика
+  // удаление из избраноого
+  const removeFavorite = async (cat: Cat) => {
+    setRemovingId(cat.id);
+    setTimeout(async () => {
+      try {
+        await fetch(`${BACKEND_URL}/likes/${cat.id}`, {
+          method: 'DELETE',
+        });
+        fetchFavoriteCats();
+      } catch (err: any) {
+        setError(err.message || 'Ошибка удаления из избранного');
+      } finally {
+        setRemovingId(null);
+      }
+    }, 500);
+  };
+
+  // реднер карточки
   const renderCatCard = (cat: Cat, isFavorite: boolean) => (
     <div
       key={cat.id}
@@ -111,32 +110,44 @@ function App() {
   );
 
   return (
-    <div className="container">
-      <header>
-        <h1>Кошачий пинтерест</h1>
-        <nav>
-          <button className={tab === 'all' ? 'active' : ''} onClick={() => setTab('all')}>Все котики</button>
-          <button className={tab === 'favorites' ? 'active' : ''} onClick={() => setTab('favorites')}>Любимые котики</button>
+    <>
+      <header className="main-header">
+        <nav className="tabs">
+          <button
+            className={tab === 'all' ? 'tab active' : 'tab'}
+            onClick={() => setTab('all')}
+          >
+            Все котики
+          </button>
+          <button
+            className={tab === 'favorites' ? 'tab active' : 'tab'}
+            onClick={() => setTab('favorites')}
+          >
+            Любимые котики
+          </button>
         </nav>
       </header>
-      <main>
-        {loading ? (
-          <div className="loading">Загрузка...</div>
-        ) : tab === 'all' ? (
-          <Suspense fallback={<div className="loading">Загрузка котиков...</div>}>
-            <InfiniteCatList />
-          </Suspense>
-        ) : (
-          <div className="cat-list">
-            {favoriteCats.length === 0 ? (
-              <div className="empty">Нет любимых котиков</div>
-            ) : (
-              favoriteCats.map((cat: Cat) => renderCatCard(cat, true))
-            )}
-          </div>
-        )}
-      </main>
-    </div>
+      <div className="container">
+        <main>
+          {loading ? (
+            <div className="loading">Загрузка...</div>
+          ) : tab === 'all' ? (
+            <Suspense fallback={<div className="loading">Загрузка котиков...</div>}>
+              <InfiniteCatList />
+            </Suspense>
+          ) : (
+            <div className="cat-list">
+              {favoriteCats.length === 0 ? (
+                <div className="empty">Нет любимых котиков</div>
+              ) : (
+                favoriteCats.map((cat: Cat) => renderCatCard(cat, true))
+              )}
+            </div>
+          )}
+          {error && <div className="error">{error}</div>}
+        </main>
+      </div>
+    </>
   )
 }
 
