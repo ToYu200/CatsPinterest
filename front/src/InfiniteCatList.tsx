@@ -122,6 +122,38 @@ const InfiniteCatList = () => {
     }
   };
 
+  // Lazy loading при скролле
+  useEffect(() => {
+    if (!hasMore || loading) return;
+    const handleScroll = () => {
+      if (loadingRef.current) return;
+      const scrollY = window.scrollY || window.pageYOffset;
+      const windowHeight = window.innerHeight;
+      const docHeight = document.documentElement.scrollHeight;
+      if (docHeight - (scrollY + windowHeight) < 200) {
+        loadCats();
+      }
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [hasMore, loading, loadCats]);
+
+  // Автозагрузка котиков до появления скролла
+  useEffect(() => {
+    if (!hasMore || loading) return;
+    const checkScroll = () => {
+      // Проверяем, есть ли скролл
+      if (document.documentElement.scrollHeight <= window.innerHeight + 20 && hasMore) {
+        loadCats();
+      }
+    };
+    // Проверяем после первой загрузки и при изменении cats
+    checkScroll();
+    // Также слушаем resize (например, если окно стало больше)
+    window.addEventListener('resize', checkScroll);
+    return () => window.removeEventListener('resize', checkScroll);
+  }, [cats, hasMore, loading, loadCats]);
+
   return (
     <>
       <div className="cat-list" style={{ minHeight: '680px' }}>
@@ -145,10 +177,10 @@ const InfiniteCatList = () => {
         ))}
       </div>
       {error && <div className="error">Ошибка: {error}</div>}
-      {hasMore && (
-        <button className="load-more-btn" onClick={loadCats} disabled={loading} style={{margin: '20px auto', display: 'block'}}>
-          {loading ? 'Загрузка...' : 'Загрузить ещё котиков'}
-        </button>
+      {loading && hasMore && (
+        <div style={{textAlign: 'center', margin: '32px 0', color: '#888', fontSize: '1.2rem'}}>
+          ... загружаем еще котиков ...
+        </div>
       )}
       {!hasMore && (
         <div className="empty">Больше котиков нет 😢</div>

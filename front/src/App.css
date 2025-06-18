@@ -42,13 +42,12 @@ nav button {
   transition: background 0.2s, color 0.2s, border 0.2s;
 }
 nav button.active, nav button:hover {
-  background: #e74c3c;
+  background: #004cff;
   color: #fff;
-  border: 1px solid #e74c3c;
 }
 
 .main-header {
-  width: 100vw;
+  width: 100%;
   min-width: 100vw;
   margin: 0;
   padding: 0;
@@ -61,18 +60,15 @@ nav button.active, nav button:hover {
   z-index: 100;
   height: 56px;
   display: flex;
-  align-items: flex-end;
 }
 
 .tabs {
   display: flex;
   width: 100%;
-  height: 56px;
+  height: 64px;
   background: transparent;
   margin: 0 auto;
   padding: 0;
-  align-items: flex-end;
-  justify-content: center;
 }
 
 .tab {
@@ -92,9 +88,9 @@ nav button.active, nav button:hover {
   align-items: center;
 }
 .tab.active {
-  border-bottom: 4px solid #fff;
-  background: none;
+  background: #1E88E5;
   color: #fff;
+  margin-left: 63px;
 }
 
 .container {
@@ -124,9 +120,28 @@ nav button.active, nav button:hover {
   max-width: 1040px;
   justify-items: center;
   align-items: center;
-  min-height: 680px; /* 3 ряда по 200px + gap */
+  min-height: 1200px; /* увеличено для скролла */
   position: relative;
   transition: min-height 0.2s;
+}
+
+@media (max-width: 1200px) {
+  .cat-list {
+    grid-template-columns: repeat(3, 1fr);
+    min-height: 900px;
+  }
+}
+@media (max-width: 800px) {
+  .cat-list {
+    grid-template-columns: repeat(2, 1fr);
+    min-height: 700px;
+  }
+}
+@media (max-width: 500px) {
+  .cat-list {
+    grid-template-columns: 1fr;
+    min-height: 500px;
+  }
 }
 
 .cat-card {
@@ -158,6 +173,7 @@ nav button.active, nav button:hover {
 .favorite {
   background: none;
   border: none;
+  outline: none;
   cursor: pointer;
   position: absolute;
   bottom: 12px;
@@ -167,18 +183,22 @@ nav button.active, nav button:hover {
   z-index: 2;
 }
 .favorite svg {
+  outline: none;
   display: block;
   transition: fill 0.2s;
 }
 .favorite.active svg path {
+  outline: none;
   fill: #e74c3c;
   stroke: #e74c3c;
 }
 .favorite svg path {
+  outline: none;
   fill: none;
   stroke: #e74c3c;
 }
 .favorite:active {
+  outline: none;
   transform: scale(1.1);
 }
 
@@ -202,6 +222,17 @@ nav button.active, nav button:hover {
   letter-spacing: 1px;
   width: 100%;
   display: block;
+}
+
+.favorite,
+.favorite:focus,
+.favorite:active,
+.favorite svg,
+.favorite svg path {
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  background: none !important;
 }
 
 @keyframes fadeInCat {
