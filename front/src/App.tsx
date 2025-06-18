@@ -1,7 +1,6 @@
 import { useState, useEffect, Suspense, lazy } from 'react'
 import './App.css'
 
-// Тип для котика
 interface Cat {
   id: string;
   url: string;

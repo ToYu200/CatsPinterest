@@ -19,7 +19,7 @@ const InfiniteCatList = () => {
   const [error, setError] = useState<string | null>(null);
   const loadingRef = useRef(false);
 
-  // Получить список избранных с backend
+  // список избранных с бека
   const fetchFavorites = useCallback(() => {
     const token = localStorage.getItem('token');
     if (!token) {
@@ -43,7 +43,7 @@ const InfiniteCatList = () => {
       });
   }, []);
 
-  // Загрузка котиков
+  // загрузка котов
   const fetchUrl = useMemo(() => {
     return `${CAT_API_URL}?limit=${CATS_PER_PAGE}&page=${page}`;
   }, [page]);
@@ -82,15 +82,13 @@ const InfiniteCatList = () => {
 
   useEffect(() => {
     fetchFavorites();
-    // eslint-disable-next-line
   }, []);
 
   useEffect(() => {
     loadCats();
-    // eslint-disable-next-line
   }, []);
 
-  // Добавить/удалить из избранного
+  // управление в избранное
   const toggleFavorite = async (cat: Cat) => {
     const token = localStorage.getItem('token');
     if (!token) {
@@ -122,7 +120,7 @@ const InfiniteCatList = () => {
     }
   };
 
-  // Lazy loading при скролле
+  // lazy loading 
   useEffect(() => {
     if (!hasMore || loading) return;
     const handleScroll = () => {
@@ -138,18 +136,16 @@ const InfiniteCatList = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [hasMore, loading, loadCats]);
 
-  // Автозагрузка котиков до появления скролла
+  // первый рендер котов до скролла
   useEffect(() => {
     if (!hasMore || loading) return;
     const checkScroll = () => {
-      // Проверяем, есть ли скролл
+      // проверка на скролл
       if (document.documentElement.scrollHeight <= window.innerHeight + 20 && hasMore) {
         loadCats();
       }
     };
-    // Проверяем после первой загрузки и при изменении cats
     checkScroll();
-    // Также слушаем resize (например, если окно стало больше)
     window.addEventListener('resize', checkScroll);
     return () => window.removeEventListener('resize', checkScroll);
   }, [cats, hasMore, loading, loadCats]);
