@@ -1,5 +1,12 @@
 # VK Fullstack Intern Challenge
 
+### Скрины проекта
+
+![image](https://github.com/user-attachments/assets/8a1fd09f-dff7-47ee-a5ff-3ae3d2ea5384)
+![image](https://github.com/user-attachments/assets/95fcb48a-3edf-44be-ac2f-7ee3348d3135)
+
+
+
 ## Описание
 
 Учебный fullstack-проект для стажировки: кошачий пинтерест. Реализован фронтенд на React + Vite и бэкенд на NestJS + TypeORM + PostgreSQL. Используется внешний API для получения картинок котиков.
