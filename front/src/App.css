@@ -10,6 +10,7 @@ body, html {
   overflow-x: hidden;
 }
 
+
 header {
   display: flex;
   flex-direction: column;
@@ -60,6 +61,7 @@ nav button.active, nav button:hover {
   z-index: 100;
   height: 56px;
   display: flex;
+  padding-left: 63px;
 }
 
 .tabs {
@@ -69,6 +71,7 @@ nav button.active, nav button:hover {
   background: transparent;
   margin: 0 auto;
   padding: 0;
+  outline: none;
 }
 
 .tab {
@@ -90,8 +93,10 @@ nav button.active, nav button:hover {
 .tab.active {
   background: #1E88E5;
   color: #fff;
-  margin-left: 63px;
+  margin-left: 0;
+  outline: none;
 }
+
 
 .container {
   max-width: 1200px;
