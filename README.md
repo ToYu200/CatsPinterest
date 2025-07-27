@@ -1,4 +1,4 @@
-# VK Fullstack Intern Challenge
+# Fullstack Intern Challenge
 
 ### Скрины проекта
 
